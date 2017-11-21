@@ -43,7 +43,7 @@ template<>
 class Connect<REG,REG>
 {
 public:
-    void operator()(REG m1,T2 m2)
+    void operator()(REG m1,REG m2)
     {
 
     }
