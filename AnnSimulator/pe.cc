@@ -19,6 +19,35 @@ enum HW_TYPE
     ASSIGN,
     ADD
 };
+template<typename T1,typename T2>
+class Connect
+{
+public:
+    void operator()(T1 m1,T2 m2)
+    {
+
+    }
+};
+
+template<typename T2>
+class Connect<REG>
+{
+public:
+    void operator()(REG m1,T2 m2)
+    {
+
+    }
+};
+
+template<>
+class Connect<REG,REG>
+{
+public:
+    void operator()(REG m1,T2 m2)
+    {
+
+    }
+};
 class Event{
 protected:
     int *results;
