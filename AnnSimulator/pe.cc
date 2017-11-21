@@ -45,7 +45,7 @@ class Connect<REG,REG>
 public:
     void operator()(REG m1,REG m2)
     {
-
+        
     }
 };
 
