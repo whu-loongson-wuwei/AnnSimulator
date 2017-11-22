@@ -12,7 +12,6 @@ public:
     virtual void Process() override
     {
         fan_out[0]=fan_in[0]*fan_in[1];
-        func_set_data();
     }
 };
 class Add:public AtomOperation
@@ -25,7 +24,6 @@ public:
     virtual void Process() override
     {
         fan_out[0]=fan_in[0]+fan_in[1];
-        func_set_data();
     }
 };
 class Register:public AtomOperation

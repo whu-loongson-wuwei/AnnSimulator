@@ -26,7 +26,7 @@ enum HW_TYPE {
     ASSIGN,
     ADD
 };
-
+#define TEST
 class AtomOperation {
 #ifndef TEST
 protected:
@@ -51,7 +51,6 @@ public:
         memset(fan_in,0,a*sizeof(int));
         memset(fan_out,0,b*sizeof(int));
     }
-    std::function<void()> func_set_data;
     HW_TYPE GetType()
     {
         return type;
@@ -114,10 +113,8 @@ public:
         num_port_in=++m2->GetCurrentIn();
         assert(m1->GetCountFanOut()>m1->GetCurrentOut());
         assert(m2->GetCountFanIn()>m2->GetCurrentIn());
-        m1->func_set_data=std::bind(&Connect::_set_data,this);
     }
 };
 using Modules = std::vector<AtomOperation*>;
-//using FunctionUnitSet = std::vector<AtomOperation*>;
 using Wires = std::vector<Connect>;
 using Wire = Connect;
