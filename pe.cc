@@ -2,30 +2,7 @@
 #include<iostream>
 using namespace std;
 
-class Mul:public AtomOperation
-{
-public:
-    Mul():AtomOperation(2,1)
-    {
-        type=MUL;
-    }
-    virtual void Process() override
-    {
-        fan_out[0]=fan_in[0]*fan_in[1];
-    }
-};
-class Add:public AtomOperation
-{
-public:
-    Add():AtomOperation(2,1)
-    {
-        type=ADD;
-    }
-    virtual void Process() override
-    {
-        fan_out[0]=fan_in[0]+fan_in[1];
-    }
-};
+
 class Register:public AtomOperation
 {
     // fan_in  is value in wire which is connected to this register from others
@@ -44,6 +21,53 @@ public:
         }
     }
 };
+
+template<short cycle>
+class Mul:public Register
+{
+public:
+        Mul():Register(1,1)
+        {
+
+        }
+};
+template<short cycle>
+class Add:public Register
+{
+public:
+    Add():Register(1,1)
+    {
+
+    }
+};
+template<>
+class Mul<1>:public AtomOperation
+{
+public:
+    Mul():AtomOperation(2,1)
+    {
+        type=MUL;
+    }
+    virtual void Process() override
+    {
+        fan_out[0]=fan_in[0]*fan_in[1];
+    }
+};
+template<>
+class Add<1>:public AtomOperation
+{
+public:
+    Add():AtomOperation(2,1)
+    {
+        type=ADD;
+    }
+    virtual void Process() override
+    {
+        fan_out[0]=fan_in[0]+fan_in[1];
+    }
+};
+
+
 class Bobble:public Register
 {
 public:
@@ -52,7 +76,6 @@ public:
         type=BOBBLE;
     }
 };
-
 
 
 class PE:public AtomOperation
@@ -65,26 +88,33 @@ public:
     { 
         modules.push_back(new Register(1,1));
         modules.push_back(new Register(1,1));
-        modules.push_back(new Register(1,1));
+        //modules.push_back(new Register(1,1));
+        modules.push_back(new Mul<2>);
         modules.push_back(new Register(1,1));
         modules.push_back(new Register(1,1));
         modules.push_back(new Register(1,2));
-       
-        Mul* mul=new Mul;
-        Add* add=new Add; 
 
+        SET_ALIAS(modules[0],mul_src_reg1)
+        SET_ALIAS(modules[1],mul_src_reg2)
+        SET_ALIAS(modules[2],mul_cycle_2)
+        SET_ALIAS(modules[3],mul_dst_reg)
+        SET_ALIAS(modules[4],add_acc_reg)
+        SET_ALIAS(modules[5],add_dst_reg)
+
+        Mul<1>* mul=new Mul<1>;
+        Add<1>* add=new Add<1>;
         for(int i=0;i<8;i++)
         {
             wires.push_back(Wire());
         }
-        wires[0](modules[0],mul);
-        wires[1](modules[1],mul);
-        wires[2](mul,modules[2]);
-        wires[3](modules[2],modules[3]);
-        wires[4](modules[3],add);
-        wires[5](modules[4],add);
-        wires[6](add,modules[5]);
-        wires[7](modules[5],modules[4]);
+        wires[0](mul_src_reg1,mul);
+        wires[1](mul_src_reg2,mul);
+        wires[2](mul,mul_cycle_2);
+        wires[3](mul_cycle_2,mul_dst_reg);
+        wires[4](mul_dst_reg,add);
+        wires[5](add_acc_reg,add);
+        wires[6](add,add_dst_reg);
+        wires[7](add_dst_reg,add_acc_reg);
     }
     virtual void Process()
     {
@@ -92,8 +122,6 @@ public:
         modules[1]->Input(0,fan_in[1]);
         EXECUTE;
         fan_out[0]= modules[5]->Output(0);
-        for(int i=0;i<5;i++)
-            cout<<modules[i]->fan_in[0]<<'-'<<modules[i]->fan_out[0]<<' ';
         cout<<endl;
      }
 };

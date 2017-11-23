@@ -14,9 +14,7 @@ modules run at the same time
 #define IN
 #define OUT
 #define EXECUTE for_each(modules.begin(),modules.end(),[](AtomOperation* e){e->Process();});\
-                for_each(wires.begin(),wires.end(),[](Connect e){\
-                    e._set_data();\
-                    if(e.Getm2()->GetType()==MUL||e.Getm2()->GetType()==ADD) e.Getm2()->Process();});                
+                for_each(wires.begin(),wires.end(),[](Connect e){e._set_data();});
 
 enum HW_TYPE {
     UNDEFINE,
@@ -99,6 +97,8 @@ public:
     void _set_data()
     {    
          m2->fan_in[num_port_in]=m1->fan_out[num_port_out];
+        if(m2->GetType()==MUL||m2->GetType()==ADD)
+            m2->Process();
     }
     AtomOperation * Getm2()
     {
@@ -118,3 +118,5 @@ public:
 using Modules = std::vector<AtomOperation*>;
 using Wires = std::vector<Connect>;
 using Wire = Connect;
+#define SET_ALIAS(src,alias)\
+    auto &alias = src;
