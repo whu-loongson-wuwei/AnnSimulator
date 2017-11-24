@@ -1,66 +1,62 @@
 
-/*****************************************************************************
-*  Copyright (C) 2014 Liwenqing ,Wuwei  wuwei@loongson.cn                    *
-*                                                                            *
-*  @file     common.h                                                        *
-*  @brief    common definitions which will be used in most files             *
-*                                                                            *
-*  @author   Shaqing ShaWei                                                  *
-*  @email    liwenqing@loongson.cn                                           *
-*  @version  0.0.0.1                                                         *
-*  @date     2017-11-24                                                      *
-*  @license  GNU General Public License (GPL)                                *
-*                                                                            *
-*                                                                            *
-*****************************************************************************/
-
+/***************************************************
+ * @file     common.h                              *
+ * @brief hardware execute engine                  *
+ * @author wuwei                                   *
+ * @email    wuwei@loongson.cn                     *
+ * @date 2017-11-24                                *
+ * @version 0.0.1                                  *
+ * @license  GNU General Public License (GPL)      *
+ ***************************************************/
 #include<cassert>
 #include<functional>
 #include<algorithm>
 #include<cstring>
 #include<vector>
 #include<iostream>
-//#define TEST
+#define TEST
 #define IN
 #define OUT
-#define EXECUTE for_each(modules.begin(),modules.end(),[](AtomOperation* e){e->Process();});\
-                for_each(wires.begin(),wires.end(),[](Connect e){e._set_data();});
+#define EXECUTE for_each(modules.begin(),modules.end(),[](Operation* e){e->Process();});\
+                for_each(wires.begin(),wires.end(),[](Connect e){\
+                    e._set_data();});  
+#define SET_ALIAS(src,alias) auto &alias = src;              
 
+
+/**
+ * @brief hardware type
+ */
 enum HW_TYPE {
     UNDEFINE,
     REGISTER,
     MUL,
-    BOBBLE,
-    ASSIGN,
-    ADD
+    ADD,
+    ALLOCATOR,
+    SELECTOR
 };
-#define TEST
-
 /**
- * @brief the basic class of all hardware modules/n
- * all hardware parts must derive from this class
- * and you should never change this class
+ * @brief the base class of all hardware modules
  */
-class AtomOperation {
+class Operation {
 #ifndef TEST
 protected:
 #else
 public:
 #endif
-    int *fan_out = nullptr; ///< place the results of operation
-    int count_fan_out; ///< total of fan_out
-    int *fan_in = nullptr; ///<place the operands and controls of operation
-    int count_fan_in;///< total of fan_in
-    int current_connect_in=-1;///<denote the current port connected from other
-    int current_connect_out=-1;///<denote the current port connected to other
-    HW_TYPE type;///< hardware type
+    int *fan_out = nullptr; ///< place the result of this operation
+    int count_fan_out;      ///<total of fan_out
+    int *fan_in = nullptr;  ///<place operands and controls of this module
+    int count_fan_in;       ///<total of fan_int
+    int current_connect_in=-1; /// the current connect to this module from others
+    int current_connect_out=-1;/// the current connect from this module to others
+    HW_TYPE type;
 public:
     /**
-     * @brief make room for fan_in and fan_out
-     * @param a  the value of count_fan_in
-     * @param b  the value of count_fan_out
+     * @brief initialize a module with a inputs and b outputs
+     * @param a the value of count_fan_int
+     * @param b the valur of count_fan_out
      */
-    AtomOperation(int a,int b)
+    Operation(int a,int b)
     {
         fan_in = new int[a];
         fan_out = new int[b];
@@ -101,15 +97,14 @@ public:
     }
 //    virtual void Initialize()=0;
 /**
- * @brief actual operation of this module\n
- * all class should override this function
+ * @brief  the actual operation of this module/n
+ * @note all derived class must implement this method
  */
     virtual void Process(){} 
 };
 
 /**
- * @brief connect two AtomOperations/n
- * denote the logical wire of two hardware modules
+ * @brief connect two operations
  */
 class Connect {
 #ifndef TEST
@@ -117,32 +112,27 @@ protected:
 #else
 public:
 #endif
-    AtomOperation *m1;
-    AtomOperation *m2;
-    int num_port_in;
-    int num_port_out;
+    Operation *m1;
+    Operation *m2;
+    int num_port_in; ///< this wire connect to fan_ont[num_port_out] in m1
+    int num_port_out;///< this wire connect to fan_in[num_port_in] in m2
 public:
     /**
-     * @brief update the value from fan_out to fan_in
+     * @brief update fan_out to fan in between two adjacent register
+     * @note you should not use this function explicitly.\n
+     * instead,use macros EXECUTE
      */
     void _set_data()
     {    
          m2->fan_in[num_port_in]=m1->fan_out[num_port_out];
-        if(m2->GetType()==MUL||m2->GetType()==ADD)
-            m2->Process();
-    }
-    AtomOperation * Getm2()
-    {
-        return m2;
+        //execute a function unit when update
+         if(m2->GetType()!=REGISTER) m2->Process();
     }
     /**
-     * @brief connect n1 and n2
-     * @param n1 source module
-     * @param n2 destination module
+     * @brief connect n1 with n2
      */
-    void operator()(AtomOperation *n1,AtomOperation *n2)
+    void operator()(Operation *n1,Operation *n2)
     {   
-       
         m1=n1;
         m2=n2;
         num_port_out=++m1->GetCurrentOut();
@@ -151,8 +141,7 @@ public:
         assert(m2->GetCountFanIn()>m2->GetCurrentIn());
     }
 };
-using Modules = std::vector<AtomOperation*>;
+using Modules = std::vector<Operation*>;
+//using FunctionUnitSet = std::vector<AtomOperation*>;
 using Wires = std::vector<Connect>;
 using Wire = Connect;
-#define SET_ALIAS(src,alias)\
-    auto &alias = src;
