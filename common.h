@@ -1,9 +1,19 @@
 
-/************************************************
-class derived from AtomOperation is a harware part;
-class Connect connect two AtomOperations;
-modules run at the same time 
-************************************************/
+/*****************************************************************************
+*  Copyright (C) 2014 Liwenqing ,Wuwei  wuwei@loongson.cn                    *
+*                                                                            *
+*  @file     common.h                                                        *
+*  @brief    common definitions which will be used in most files             *
+*                                                                            *
+*  @author   Shaqing ShaWei                                                  *
+*  @email    liwenqing@loongson.cn                                           *
+*  @version  0.0.0.1                                                         *
+*  @date     2017-11-24                                                      *
+*  @license  GNU General Public License (GPL)                                *
+*                                                                            *
+*                                                                            *
+*****************************************************************************/
+
 #include<cassert>
 #include<functional>
 #include<algorithm>
@@ -25,21 +35,31 @@ enum HW_TYPE {
     ADD
 };
 #define TEST
+
+/**
+ * @brief the basic class of all hardware modules/n
+ * all hardware parts must derive from this class
+ * and you should never change this class
+ */
 class AtomOperation {
 #ifndef TEST
 protected:
 #else
 public:
 #endif
-    AtomOperation* attached_func_unit = nullptr;
-    int *fan_out = nullptr;
-    int count_fan_out;
-    int *fan_in = nullptr;
-    int count_fan_in;
-    int current_connect_in=-1;
-    int current_connect_out=-1;
-    HW_TYPE type;
+    int *fan_out = nullptr; ///< place the results of operation
+    int count_fan_out; ///< total of fan_out
+    int *fan_in = nullptr; ///<place the operands and controls of operation
+    int count_fan_in;///< total of fan_in
+    int current_connect_in=-1;///<denote the current port connected from other
+    int current_connect_out=-1;///<denote the current port connected to other
+    HW_TYPE type;///< hardware type
 public:
+    /**
+     * @brief make room for fan_in and fan_out
+     * @param a  the value of count_fan_in
+     * @param b  the value of count_fan_out
+     */
     AtomOperation(int a,int b)
     {
         fan_in = new int[a];
@@ -80,9 +100,17 @@ public:
         return count_fan_out;
     }
 //    virtual void Initialize()=0;
+/**
+ * @brief actual operation of this module\n
+ * all class should override this function
+ */
     virtual void Process(){} 
 };
 
+/**
+ * @brief connect two AtomOperations/n
+ * denote the logical wire of two hardware modules
+ */
 class Connect {
 #ifndef TEST
 protected:
@@ -94,6 +122,9 @@ public:
     int num_port_in;
     int num_port_out;
 public:
+    /**
+     * @brief update the value from fan_out to fan_in
+     */
     void _set_data()
     {    
          m2->fan_in[num_port_in]=m1->fan_out[num_port_out];
@@ -104,6 +135,11 @@ public:
     {
         return m2;
     }
+    /**
+     * @brief connect n1 and n2
+     * @param n1 source module
+     * @param n2 destination module
+     */
     void operator()(AtomOperation *n1,AtomOperation *n2)
     {   
        

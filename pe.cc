@@ -1,15 +1,33 @@
+
+
+/*****************************************************************************
+*  Copyright (C) 2014 Liwenqing ,Wuwei  wuwei@loongson.cn                    *
+*                                                                            *
+*  @file     common.h                                                        *
+*  @brief    common definitions which will be used in most files             *
+*                                                                            *
+*  @author   Shaqing ShaWei                                                  *
+*  @email    liwenqing@loongson.cn                                           *
+*  @version  0.0.0.1                                                         *
+*  @date     2017-11-24                                                      *
+*  @license  GNU General Public License (GPL)                                *
+*                                                                            *
+*                                                                            *
+*****************************************************************************/
 #include"common.h"
 #include<iostream>
 using namespace std;
 
-
+/**
+ * @brief register
+ */
 class Register:public AtomOperation
 {
     // fan_in  is value in wire which is connected to this register from others
     // fan_out is the actual value of this  register 
 public:
 
-    Register(int a,int b):AtomOperation(a,b)
+    Register(int b):AtomOperation(1,b)
     {  
         type = REGISTER;
     }
@@ -22,20 +40,62 @@ public:
     }
 };
 
+
+
 template<short cycle>
 class Mul:public Register
 {
 public:
-        Mul():Register(1,1)
+        Mul():Register(1)
         {
 
         }
 };
 template<short cycle>
+class Selector:public Register
+{
+public:
+    Selector():Register(1)
+    {
+
+    }
+};
+
+template<short cycle>
+class Allocator:public Register
+{
+public:
+    Allocator():Register(1)
+    {
+
+    }
+};
+
+
+template<short cycle>
 class Add:public Register
 {
 public:
-    Add():Register(1,1)
+    Add():Register(1)
+    {
+
+    }
+};
+
+template<>
+class Allocator<1>:public AtomOperation
+{
+public:
+    Allocator(int c,int b):AtomOperation(1+c,b)
+    {
+
+    }
+};
+template<>
+class Selector<1>:public AtomOperation
+{
+public:
+    Selector(int a,int c):AtomOperation(c+a,1)
     {
 
     }
@@ -68,16 +128,6 @@ public:
 };
 
 
-class Bobble:public Register
-{
-public:
-    Bobble():Register(1,1)
-    {
-        type=BOBBLE;
-    }
-};
-
-
 class PE:public AtomOperation
 {
 private:
@@ -86,13 +136,13 @@ private:
 public:
     PE():AtomOperation(2,1)
     { 
-        modules.push_back(new Register(1,1));
-        modules.push_back(new Register(1,1));
+        modules.push_back(new Register(1));
+        modules.push_back(new Register(1));
         //modules.push_back(new Register(1,1));
         modules.push_back(new Mul<2>);
-        modules.push_back(new Register(1,1));
-        modules.push_back(new Register(1,1));
-        modules.push_back(new Register(1,2));
+        modules.push_back(new Register(1));
+        modules.push_back(new Register(1));
+        modules.push_back(new Register(2));
 
         SET_ALIAS(modules[0],mul_src_reg1)
         SET_ALIAS(modules[1],mul_src_reg2)
